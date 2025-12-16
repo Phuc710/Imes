@@ -1,0 +1,19 @@
+services:
+  esp32_1:
+    image: esp32_1/tb-postgres
+    container_name: esp32_1
+    restart: always
+    ports:
+      - "8080:9090"
+      - "1883:1883"
+      - "7070:7070"
+      - "5683-5688:5683-5688/udp"
+    environment:
+      TB_QUEUE_TYPE: in-memory
+    volumes:
+      - mytb-data:/data
+      - mytb-logs:/var/log/esp32_1
+
+volumes:
+  mytb-data:
+  mytb-logs:
