@@ -1,0 +1,72 @@
+services:
+  thingsboard:
+    image: thingsboard/tb-postgres
+    container_name: thingsboard
+    restart: always
+    ports:
+      - "8080:9090"
+      - "1883:1883"
+    environment:
+      TB_QUEUE_TYPE: in-memory
+    volumes:
+      - tb-data:/data
+      - tb-logs:/var/log/thingsboard
+    networks:
+      - tb-network
+    healthcheck:
+      test: ["CMD-SHELL", "timeout 5 bash -c '</dev/tcp/localhost/1883' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+
+  tb-gateway:
+    image: thingsboard/tb-gateway
+    container_name: tb-gateway
+    restart: always
+    depends_on:
+      thingsboard:
+        condition: service_healthy
+      mosquitto:
+        condition: service_started
+    ports:
+      - "5000:5000"   # REST connector
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      host: thingsboard
+      port: 1883
+      accessToken: 8usQjHYHnuf2jgEoOnco
+    volumes:
+      - tb-gw-config:/thingsboard_gateway/config
+      - tb-gw-logs:/thingsboard_gateway/logs
+      - tb-gw-extensions:/thingsboard_gateway/extensions
+    networks:
+      - tb-network
+
+  mosquitto:
+    image: eclipse-mosquitto:latest
+    container_name: mosquitto
+    restart: always
+    ports:
+      - "18883:1883"  # MQTT port for ESP32/Python (external:internal)
+      - "9001:9001"   # WebSocket port
+    volumes:
+      - mosquitto-data:/mosquitto/data
+      - mosquitto-logs:/mosquitto/log
+    networks:
+      - tb-network
+    command: mosquitto -c /mosquitto-no-auth.conf
+
+volumes:
+  tb-data:
+  tb-logs:
+  tb-gw-config:
+  tb-gw-logs:
+  tb-gw-extensions:
+  mosquitto-data:
+  mosquitto-logs:
+
+networks:
+  tb-network:
+    driver: bridge

@@ -1,0 +1,28 @@
+{
+    "topicFilter": "sensor/+/data",
+    "subscriptionQos": 1,
+    "converter": {
+        "type": "json",
+        "deviceInfo": {
+            "deviceNameExpressionSource": "topic",
+            "deviceNameExpression": "(?<=sensor/)(.*?)(?=/data)",
+            "deviceProfileExpressionSource": "constant",
+            "deviceProfileExpression": "default"
+        },
+        "sendDataOnlyOnChange": false,
+        "timeout": 60000,
+        "attributes": [],
+        "timeseries": [
+            {
+                "type": "double",
+                "key": "temperature",
+                "value": "${temperature}"
+            },
+            {
+                "type": "double",
+                "key": "humidity",
+                "value": "${humidity}"
+            }
+        ]
+    }
+}

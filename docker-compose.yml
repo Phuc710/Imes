@@ -1,19 +1,28 @@
 services:
-  esp32_1:
-    image: esp32_1/tb-postgres
-    container_name: esp32_1
+  thingsboard:
+    image: thingsboard/tb-postgres
+    container_name: thingsboard
     restart: always
     ports:
       - "8080:9090"
       - "1883:1883"
-      - "7070:7070"
-      - "5683-5688:5683-5688/udp"
     environment:
       TB_QUEUE_TYPE: in-memory
     volumes:
-      - mytb-data:/data
-      - mytb-logs:/var/log/esp32_1
+      - tb-data:/data
+      - tb-logs:/var/log/thingsboard
+
+  tb-gateway:
+    image: thingsboard/tb-gateway
+    container_name: tb-gateway
+    restart: always
+    depends_on:
+      - thingsboard
+    volumes:
+      - ./config:/thingsboard_gateway/config
+      - tb-gateway-logs:/thingsboard_gateway/logs
 
 volumes:
-  mytb-data:
-  mytb-logs:
+  tb-data:
+  tb-logs:
+  tb-gateway-logs:
