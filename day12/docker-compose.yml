@@ -1,0 +1,52 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:14
+    container_name: tb_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: thingsboard
+      POSTGRES_USER: thingsboard
+      POSTGRES_PASSWORD: thingsboard
+    volumes:
+      - tb_pgdata:/var/lib/postgresql/data
+
+  thingsboard:
+    image: thingsboard/tb-postgres:latest
+    container_name: thingsboard
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    environment:
+      TB_QUEUE_TYPE: in-memory
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/thingsboard
+      SPRING_DATASOURCE_USERNAME: thingsboard
+      SPRING_DATASOURCE_PASSWORD: thingsboard
+      # MQTT SSL Configuration (PEM)
+      MQTT_SSL_ENABLED: "true"
+      MQTT_SSL_BIND_PORT: "8883"
+      MQTT_SSL_CREDENTIALS_TYPE: "PEM"
+      MQTT_SSL_PEM_CERT: "/ssl/server.pem"
+      MQTT_SSL_PEM_KEY: "/ssl/server-key.pem"
+      MQTT_SSL_PEM_CA: "/ssl/rootCert.pem"  # CA to verify client certs
+      MQTT_SSL_CLIENT_AUTH_ENABLED: "true"  # Bắt buộc client phải gửi certificate
+      # X.509 Auto-Provisioning
+      MQTT_SSL_X509_DEVICE_PROVISIONING_ENABLED: "true"
+      MQTT_SSL_X509_DEVICE_PROVISIONING_CHAIN_CN_IS_USERNAME: "true"
+      MQTT_SSL_X509_DEVICE_PROVISIONING_CREATE_CREDENTIALS: "true"
+      MQTT_SSL_SKIP_VALIDITY_CHECK_FOR_CLIENT_CERT: "true"
+    ports:
+      - "8080:9090"   # Web UI
+      - "1883:1883"   # MQTT
+      - "8883:8883"   # MQTT SSL
+      - "5683-5688:5683-5688/udp" # CoAP
+    volumes:
+      - tb_data:/data
+      - tb_logs:/var/log/thingsboard
+      - ./tb_ssl:/ssl
+
+volumes:
+  tb_pgdata:
+  tb_data:
+  tb_logs:
